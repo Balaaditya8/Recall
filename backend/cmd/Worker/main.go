@@ -42,8 +42,7 @@ func main() {
 						fmt.Println("ollama error:", err)
 						return
 					}
-
-					fmt.Println("ollama result:", result)
+					fmt.Printf("type: %s\nsummary: %s\nconfidence: %s\n", result.Type, result.Summary, result.Confidence)
 				}()
 			}
 		}
