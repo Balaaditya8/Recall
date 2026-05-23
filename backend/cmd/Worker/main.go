@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"os"
+	"recall/services"
 
 	"github.com/joho/godotenv"
 	"github.com/slack-go/slack"
+	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
 )
 
@@ -23,7 +25,26 @@ func main() {
 			switch evt.Type {
 			case socketmode.EventTypeEventsAPI:
 				client.Ack(*evt.Request)
-				fmt.Println("got an event")
+				eventsAPIEvent, ok := evt.Data.(slackevents.EventsAPIEvent)
+				if !ok {
+					continue
+				}
+
+				innerEvent, ok := eventsAPIEvent.InnerEvent.Data.(*slackevents.MessageEvent)
+				if !ok {
+					continue
+				}
+
+				text := innerEvent.Text
+				go func() {
+					result, err := services.ProcessWithOllama(text)
+					if err != nil {
+						fmt.Println("ollama error:", err)
+						return
+					}
+
+					fmt.Println("ollama result:", result)
+				}()
 			}
 		}
 	}()
