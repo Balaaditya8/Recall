@@ -4,27 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"recall/models"
 )
 
-type ExtractedEvent struct {
-	Type       string `json:"type"`
-	Summary    string `json:"summary"`
-	Owner      string `json:"owner"`
-	Deadline   string `json:"deadline"`
-	Confidence string `json:"confidence"`
-}
-
-type OllamaRequest struct {
-	Model  string `json:"model"`
-	Prompt string `json:"prompt"`
-	Stream bool   `json:"stream"`
-}
-
-type OllamaResponse struct {
-	Response string `json:"response"`
-}
-
-func ProcessWithOllama(message string) (ExtractedEvent, error) {
+func ProcessWithOllama(message models.SlackMessage) (models.ExtractedEvent, error) {
 
 	prompt := `Reply ONLY with raw JSON, no explanation, no markdown:
 	{
@@ -34,9 +17,9 @@ func ProcessWithOllama(message string) (ExtractedEvent, error) {
 	"deadline": "deadline if mentioned, else null",
 	"confidence": "high|low"
 	}
-	Message: "` + message + `"`
+	Message: "` + message.Text + `"`
 
-	reqBody := OllamaRequest{
+	reqBody := models.OllamaRequest{
 		Model:  "mistral:latest",
 		Prompt: prompt,
 		Stream: false,
@@ -44,7 +27,7 @@ func ProcessWithOllama(message string) (ExtractedEvent, error) {
 
 	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return ExtractedEvent{}, err
+		return models.ExtractedEvent{}, err
 	}
 
 	resp, err := http.Post(
@@ -53,16 +36,20 @@ func ProcessWithOllama(message string) (ExtractedEvent, error) {
 		bytes.NewBuffer(bodyBytes),
 	)
 	if err != nil {
-		return ExtractedEvent{}, err
+		return models.ExtractedEvent{}, err
 	}
 	defer resp.Body.Close()
 
-	var ollamaResp OllamaResponse
+	var ollamaResp models.OllamaResponse
 	if err := json.NewDecoder(resp.Body).Decode(&ollamaResp); err != nil {
-		return ExtractedEvent{}, err
+		return models.ExtractedEvent{}, err
 	}
 
-	var extracted ExtractedEvent
+	var extracted models.ExtractedEvent
 	json.Unmarshal([]byte(ollamaResp.Response), &extracted)
+	extracted.Text = message.Text
+	extracted.Channel = message.Channel
+	extracted.Timestamp = message.Timestamp
+	extracted.User = message.User
 	return extracted, nil
 }

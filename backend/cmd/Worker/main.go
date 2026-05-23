@@ -5,6 +5,8 @@ import (
 	"os"
 	"recall/services"
 
+	"recall/models"
+
 	"github.com/joho/godotenv"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
@@ -35,14 +37,20 @@ func main() {
 					continue
 				}
 
-				text := innerEvent.Text
+				message := models.SlackMessage{Text: innerEvent.Text,
+					Channel:   innerEvent.Channel,
+					Timestamp: innerEvent.TimeStamp,
+					User:      innerEvent.User,
+				}
+
 				go func() {
-					result, err := services.ProcessWithOllama(text)
+					result, err := services.ProcessWithOllama(message)
 					if err != nil {
 						fmt.Println("ollama error:", err)
 						return
 					}
-					fmt.Printf("type: %s\nsummary: %s\nconfidence: %s\n", result.Type, result.Summary, result.Confidence)
+					fmt.Print(result)
+					//fmt.Printf("type: %s\nsummary: %s\nconfidence: %s\n", result.Type, result.Summary, result.Confidence)
 				}()
 			}
 		}
