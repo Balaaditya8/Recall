@@ -17,6 +17,7 @@ type ExtractedEvent struct {
 	Channel    string `json:"channel"`
 	Timestamp  string `json:"timestamp"`
 	User       string `json:"user"`
+	CreatedAt  string `json:"created_at"`
 }
 
 type OllamaRequest struct {

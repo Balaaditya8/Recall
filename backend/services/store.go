@@ -15,3 +15,23 @@ func SaveDecision(db *sql.DB, event models.ExtractedEvent) error {
 	)
 	return err
 }
+
+func GetDecisions(db *sql.DB) ([]models.ExtractedEvent, error) {
+	rows, err := db.Query(`
+        SELECT type, summary, owner, deadline, confidence, channel, timestamp, slack_user, created_at 
+        FROM decisions 
+        ORDER BY created_at DESC
+    `)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var decisions []models.ExtractedEvent
+	for rows.Next() {
+		var d models.ExtractedEvent
+		rows.Scan(&d.Type, &d.Summary, &d.Owner, &d.Deadline, &d.Confidence, &d.Channel, &d.Timestamp, &d.User, &d.CreatedAt)
+		decisions = append(decisions, d)
+	}
+	return decisions, nil
+}
