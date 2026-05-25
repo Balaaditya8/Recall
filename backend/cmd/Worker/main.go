@@ -66,10 +66,12 @@ func main() {
 						return
 					}
 					fmt.Print(result)
-					err = services.SaveDecision(db, result)
-					if err != nil {
-						fmt.Println("db error:", err)
-						return
+					if result.Confidence == "high" {
+						err = services.SaveDecision(db, result)
+						if err != nil {
+							fmt.Println("db error:", err)
+							return
+						}
 					}
 					//fmt.Printf("type: %s\nsummary: %s\nconfidence: %s\n", result.Type, result.Summary, result.Confidence)
 				}()
