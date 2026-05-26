@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"recall/handlers"
 	"recall/services"
 
 	"recall/models"
@@ -18,14 +19,14 @@ import (
 	"github.com/slack-go/slack/socketmode"
 )
 
+var channelCache = map[string]string{}
+
 func main() {
 	godotenv.Load(".env")
 	botToken := os.Getenv("SLACK_BOT_TOKEN")
 	appToken := os.Getenv("SLACK_APP_TOKEN")
 	db_url := os.Getenv("DB_URL")
-	api := slack.New(botToken,
-		slack.OptionAppLevelToken(appToken),
-	)
+	handlers.InitSlack(botToken, appToken)
 	db, err := sql.Open("postgres", db_url)
 	if err != nil {
 		log.Fatal(err)
@@ -37,7 +38,7 @@ func main() {
 	}
 	fmt.Println("connected to postgres")
 
-	client := socketmode.New(api)
+	client := socketmode.New(handlers.Client)
 	go func() {
 		for evt := range client.Events {
 			switch evt.Type {
@@ -53,6 +54,10 @@ func main() {
 					continue
 				}
 
+				channel_name := handlers.GetChannelName(innerEvent.Channel)
+
+				fmt.Println("Channel:", channel_name)
+
 				var contextMessages []string
 
 				if innerEvent.ThreadTimeStamp != "" {
@@ -61,7 +66,7 @@ func main() {
 						ChannelID: innerEvent.Channel,
 						Timestamp: innerEvent.ThreadTimeStamp,
 					}
-					msgs, _, _, err := api.GetConversationReplies(&params)
+					msgs, _, _, err := handlers.Client.GetConversationReplies(&params)
 					if err != nil {
 						fmt.Println("error fetching thread:", err)
 					} else {

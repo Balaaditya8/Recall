@@ -2,6 +2,7 @@ package services
 
 import (
 	"database/sql"
+	"recall/handlers"
 	"recall/models"
 )
 
@@ -32,6 +33,9 @@ func GetDecisions(db *sql.DB) ([]models.ExtractedEvent, error) {
 		var d models.ExtractedEvent
 		rows.Scan(&d.Type, &d.Summary, &d.Owner, &d.Deadline, &d.Confidence, &d.Channel, &d.Timestamp, &d.User, &d.CreatedAt)
 		decisions = append(decisions, d)
+	}
+	for i := range decisions {
+		decisions[i].Channel = handlers.GetChannelName(decisions[i].Channel)
 	}
 	return decisions, nil
 }

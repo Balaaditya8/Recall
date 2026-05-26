@@ -14,7 +14,9 @@ import (
 
 func main() {
 	godotenv.Load(".env")
-
+	botToken := os.Getenv("SLACK_BOT_TOKEN")
+	appToken := os.Getenv("SLACK_APP_TOKEN")
+	handlers.InitSlack(botToken, appToken)
 	db_url := os.Getenv("DB_URL")
 	db, err := sql.Open("postgres", db_url)
 	if err != nil {
