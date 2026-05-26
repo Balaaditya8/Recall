@@ -3,12 +3,16 @@ package services
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"recall/models"
+	"strings"
 )
 
-func ProcessWithOllama(message models.SlackMessage) (models.ExtractedEvent, error) {
+func ProcessWithOllama(message models.SlackMessage, context []string) (models.ExtractedEvent, error) {
 
+	contexts := strings.Join(context, "\n")
+	fmt.Println("Reply contexts:", contexts)
 	prompt := `Reply ONLY with raw JSON, no explanation, no markdown:
 	{
 	"type": "task|decision|deadline|none",
@@ -17,7 +21,12 @@ func ProcessWithOllama(message models.SlackMessage) (models.ExtractedEvent, erro
 	"deadline": "deadline if mentioned, else null",
 	"confidence": "high|low"
 	}
-	Message: "` + message.Text + `"`
+
+	Previous conversation context if any:
+	"` + contexts + `"
+
+	Current message to analyze:
+	"` + message.Text + `"`
 
 	reqBody := models.OllamaRequest{
 		Model:  "mistral:latest",
@@ -44,7 +53,7 @@ func ProcessWithOllama(message models.SlackMessage) (models.ExtractedEvent, erro
 	if err := json.NewDecoder(resp.Body).Decode(&ollamaResp); err != nil {
 		return models.ExtractedEvent{}, err
 	}
-
+	fmt.Println("raw ollama response:", ollamaResp.Response)
 	var extracted models.ExtractedEvent
 	json.Unmarshal([]byte(ollamaResp.Response), &extracted)
 	extracted.Text = message.Text

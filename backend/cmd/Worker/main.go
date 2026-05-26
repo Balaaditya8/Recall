@@ -53,6 +53,27 @@ func main() {
 					continue
 				}
 
+				var contextMessages []string
+
+				if innerEvent.ThreadTimeStamp != "" {
+					// it's a reply, fetch the whole thread
+					params := slack.GetConversationRepliesParameters{
+						ChannelID: innerEvent.Channel,
+						Timestamp: innerEvent.ThreadTimeStamp,
+					}
+					msgs, _, _, err := api.GetConversationReplies(&params)
+					if err != nil {
+						fmt.Println("error fetching thread:", err)
+					} else {
+						for _, m := range msgs[:len(msgs)-1] {
+							contextMessages = append(contextMessages, m.Text)
+						}
+					}
+				} else {
+					// single message, no thread
+					contextMessages = append(contextMessages, "")
+				}
+
 				message := models.SlackMessage{Text: innerEvent.Text,
 					Channel:   innerEvent.Channel,
 					Timestamp: innerEvent.TimeStamp,
@@ -60,18 +81,14 @@ func main() {
 				}
 
 				go func() {
-					result, err := services.ProcessWithOllama(message)
+					result, err := services.ProcessWithOllama(message, contextMessages)
 					if err != nil {
 						fmt.Println("ollama error:", err)
 						return
 					}
 					fmt.Print(result)
-					if result.Confidence == "high" {
-						err = services.SaveDecision(db, result)
-						if err != nil {
-							fmt.Println("db error:", err)
-							return
-						}
+					if result.Type != "none" && result.Confidence == "high" {
+						services.SaveDecision(db, result)
 					}
 					//fmt.Printf("type: %s\nsummary: %s\nconfidence: %s\n", result.Type, result.Summary, result.Confidence)
 				}()
