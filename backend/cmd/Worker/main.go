@@ -92,7 +92,9 @@ func main() {
 						return
 					}
 					fmt.Print(result)
-					if result.Type != "none" && result.Confidence == "high" {
+					if result.Type == "none" {
+						// ignore completely
+					} else {
 						services.SaveDecision(db, result)
 					}
 					//fmt.Printf("type: %s\nsummary: %s\nconfidence: %s\n", result.Type, result.Summary, result.Confidence)

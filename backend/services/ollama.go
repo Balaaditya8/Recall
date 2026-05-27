@@ -26,7 +26,14 @@ func ProcessWithOllama(message models.SlackMessage, context []string) (models.Ex
 	"` + contexts + `"
 
 	Current message to analyze:
-	"` + message.Text + `"`
+	"` + message.Text + `"
+	
+	Rules:
+	- Only extract if there is a CLEAR commitment, decision, or deadline that was explicitly agreed upon
+	- Vague questions, suggestions, or casual chat should be type "none"
+	- Confidence should be "high" only if the commitment is explicit and unambiguous
+	- If someone is just asking a question with no answer, type is "none"
+	`
 
 	reqBody := models.OllamaRequest{
 		Model:  "mistral:latest",
@@ -60,5 +67,10 @@ func ProcessWithOllama(message models.SlackMessage, context []string) (models.Ex
 	extracted.Channel = message.Channel
 	extracted.Timestamp = message.Timestamp
 	extracted.User = message.User
+	if extracted.Confidence == "high" {
+		extracted.Status = "confirmed"
+	} else {
+		extracted.Status = "pending"
+	}
 	return extracted, nil
 }
