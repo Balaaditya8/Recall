@@ -76,7 +76,18 @@ func main() {
 					}
 				} else {
 					// single message, no thread
-					contextMessages = append(contextMessages, "")
+					params := slack.GetConversationHistoryParameters{
+						ChannelID: innerEvent.Channel,
+						Limit:     5,
+					}
+					history, _ := handlers.Client.GetConversationHistory(&params)
+					msgs := history.Messages
+					for i, j := 0, len(msgs)-1; i < j; i, j = i+1, j-1 {
+						msgs[i], msgs[j] = msgs[j], msgs[i]
+					}
+					for _, m := range msgs[:len(msgs)-1] {
+						contextMessages = append(contextMessages, m.Text)
+					}
 				}
 
 				message := models.SlackMessage{Text: innerEvent.Text,
