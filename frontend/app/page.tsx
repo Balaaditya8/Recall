@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 type Decision = {
+  id: number;
   type: string;
   summary: string;
   owner: string;
@@ -12,6 +13,7 @@ type Decision = {
   timestamp: string;
   user: string;
   created_at: string;
+  status: string;
 };
 
 const TYPE_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
@@ -31,6 +33,106 @@ function timeAgo(dateStr: string) {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+function PendingCard({ d, onAction }: { d: Decision; onAction: () => void }) {
+  const [summary, setSummary] = useState(d.summary);
+  const [owner, setOwner] = useState(d.owner === "null" ? "" : d.owner);
+  const [deadline, setDeadline] = useState(d.deadline === "null" ? "" : d.deadline);
+  const [type, setType] = useState(d.type);
+  const [loading, setLoading] = useState(false);
+
+  const confirm = async () => {
+    setLoading(true);
+    await fetch(`http://localhost:8080/decisions/${d.id}/confirm`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ summary, owner, deadline, type }),
+    });
+    setLoading(false);
+    onAction();
+  };
+
+  const dismiss = async () => {
+    setLoading(true);
+    await fetch(`http://localhost:8080/decisions/${d.id}/dismiss`, { method: "POST" });
+    setLoading(false);
+    onAction();
+  };
+
+  return (
+    <div className="border border-amber-500/20 bg-amber-500/5 rounded-2xl p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-amber-400 text-xs">⚠</span>
+        <span className="text-xs text-amber-400 font-medium">Needs review</span>
+        <span className="text-xs text-zinc-600 ml-auto font-mono">{timeAgo(d.created_at)}</span>
+      </div>
+
+      <p className="text-xs text-zinc-500 mb-1">Ollama extracted:</p>
+      <p className="text-zinc-400 text-sm mb-4 italic">"{d.summary}"</p>
+
+      <div className="flex flex-col gap-2 mb-4">
+        <div>
+          <label className="text-xs text-zinc-600 mb-1 block">Type</label>
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-white/20"
+          >
+            <option value="task">Task</option>
+            <option value="decision">Decision</option>
+            <option value="deadline">Deadline</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-xs text-zinc-600 mb-1 block">Summary</label>
+          <input
+            value={summary}
+            onChange={(e) => setSummary(e.target.value)}
+            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-white/20"
+            placeholder="What was decided or committed to?"
+          />
+        </div>
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <label className="text-xs text-zinc-600 mb-1 block">Owner</label>
+            <input
+              value={owner}
+              onChange={(e) => setOwner(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-white/20"
+              placeholder="Who owns this?"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="text-xs text-zinc-600 mb-1 block">Deadline</label>
+            <input
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-white/20"
+              placeholder="When?"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          onClick={confirm}
+          disabled={loading || !summary}
+          className="flex-1 bg-white text-black text-sm font-medium py-2 rounded-lg hover:bg-zinc-200 transition-colors disabled:opacity-40"
+        >
+          {loading ? "Saving..." : "Confirm"}
+        </button>
+        <button
+          onClick={dismiss}
+          disabled={loading}
+          className="px-4 bg-white/5 text-zinc-400 text-sm py-2 rounded-lg hover:bg-white/10 transition-colors border border-white/10"
+        >
+          Dismiss
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function DecisionCard({ d }: { d: Decision }) {
   const cfg = TYPE_CONFIG[d.type] ?? TYPE_CONFIG.none;
 
@@ -43,20 +145,8 @@ function DecisionCard({ d }: { d: Decision }) {
               <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
               {cfg.label}
             </span>
-            {d.confidence === "high" && (
-              <span className="text-xs text-zinc-500 font-mono">high confidence</span>
-            )}
-            {d.confidence === "low" && (
-              <span className="inline-flex items-center gap-1 text-xs text-amber-400/80 font-mono">
-                <span>⚠</span> needs review
-              </span>
-            )}
           </div>
-
-          <p className="text-white/90 text-sm font-medium leading-snug mb-3">
-            {d.summary}
-          </p>
-
+          <p className="text-white/90 text-sm font-medium leading-snug mb-3">{d.summary}</p>
           <div className="flex items-center gap-4 flex-wrap">
             {d.owner && d.owner !== "null" && (
               <span className="flex items-center gap-1.5 text-xs text-zinc-500">
@@ -78,7 +168,6 @@ function DecisionCard({ d }: { d: Decision }) {
             )}
           </div>
         </div>
-
         <div className="text-right shrink-0">
           <span className="text-xs text-zinc-600 font-mono">{timeAgo(d.created_at)}</span>
         </div>
@@ -92,7 +181,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
 
-  useEffect(() => {
+  const load = () => {
     fetch("http://localhost:8080/decisions")
       .then((r) => r.json())
       .then((data) => {
@@ -100,20 +189,27 @@ export default function Home() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    load();
+    const interval = setInterval(load, 5000);
+    return () => clearInterval(interval);
   }, []);
 
-  const filtered = filter === "all" ? decisions : decisions.filter((d) => d.type === filter);
+  const pending = decisions.filter((d) => d.status === "pending");
+  const confirmed = decisions.filter((d) => d.status === "confirmed");
+  const filtered = filter === "all" ? confirmed : confirmed.filter((d) => d.type === filter);
 
   const counts = {
-    all: decisions.length,
-    task: decisions.filter((d) => d.type === "task").length,
-    decision: decisions.filter((d) => d.type === "decision").length,
-    deadline: decisions.filter((d) => d.type === "deadline").length,
+    all: confirmed.length,
+    task: confirmed.filter((d) => d.type === "task").length,
+    decision: confirmed.filter((d) => d.type === "decision").length,
+    deadline: confirmed.filter((d) => d.type === "deadline").length,
   };
 
   return (
     <main className="min-h-screen bg-[#0a0a0a] text-white">
-      {/* Subtle grid background */}
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
@@ -124,19 +220,28 @@ export default function Home() {
       />
 
       <div className="relative max-w-2xl mx-auto px-6 py-16">
-        {/* Header */}
         <div className="mb-12">
           <div className="flex items-center gap-2 mb-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-xs text-zinc-500 font-mono tracking-widest uppercase">Live</span>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-1">
-            Recall
-          </h1>
-          <p className="text-zinc-500 text-sm">
-            Decisions and commitments from your conversations.
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Recall</h1>
+          <p className="text-zinc-500 text-sm">Decisions and commitments from your conversations.</p>
         </div>
+
+        {/* Pending section */}
+        {pending.length > 0 && (
+          <div className="mb-10">
+            <p className="text-xs text-amber-400/80 font-mono uppercase tracking-widest mb-3">
+              {pending.length} pending review
+            </p>
+            <div className="flex flex-col gap-3">
+              {pending.map((d) => (
+                <PendingCard key={d.id} d={d} onAction={load} />
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Filters */}
         <div className="flex gap-2 mb-8 flex-wrap">
@@ -158,7 +263,7 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Content */}
+        {/* Confirmed decisions */}
         {loading ? (
           <div className="flex items-center gap-3 text-zinc-600 py-12">
             <div className="w-4 h-4 border border-zinc-700 border-t-zinc-400 rounded-full animate-spin" />
@@ -171,16 +276,15 @@ export default function Home() {
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {filtered.map((d, i) => (
-              <DecisionCard key={i} d={d} />
+            {filtered.map((d) => (
+              <DecisionCard key={d.id} d={d} />
             ))}
           </div>
         )}
 
-        {/* Footer */}
-        {!loading && decisions.length > 0 && (
+        {!loading && confirmed.length > 0 && (
           <p className="text-center text-zinc-700 text-xs font-mono mt-10">
-            {decisions.length} decision{decisions.length !== 1 ? "s" : ""} captured
+            {confirmed.length} decision{confirmed.length !== 1 ? "s" : ""} captured
           </p>
         )}
       </div>

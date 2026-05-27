@@ -8,6 +8,7 @@ type SlackMessage struct {
 }
 
 type ExtractedEvent struct {
+	ID         int    `json:"id"`
 	Type       string `json:"type"`
 	Summary    string `json:"summary"`
 	Owner      string `json:"owner"`
