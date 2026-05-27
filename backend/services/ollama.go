@@ -7,10 +7,12 @@ import (
 	"net/http"
 	"recall/models"
 	"strings"
+	"time"
 )
 
 func ProcessWithOllama(message models.SlackMessage, context []string) (models.ExtractedEvent, error) {
 
+	now := time.Now()
 	contexts := strings.Join(context, "\n")
 	fmt.Println("Reply contexts:", contexts)
 	prompt := `Reply ONLY with raw JSON, no explanation, no markdown:
@@ -29,6 +31,7 @@ func ProcessWithOllama(message models.SlackMessage, context []string) (models.Ex
 	"` + message.Text + `"
 
 	Rules:
+	- The current date-time is "` + now.Local().String() + `", use this information for deadline based processing if needed
 	- Only extract if there is a CLEAR commitment, decision, or deadline explicitly agreed upon
 	- Vague questions, suggestions, or casual chat = type "none"
 	- If someone is just asking a question with no answer = type "none"
