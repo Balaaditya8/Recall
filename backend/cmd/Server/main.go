@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"recall/handlers"
+	"recall/models"
 	"recall/services"
 
 	"github.com/gin-gonic/gin"
@@ -38,5 +39,28 @@ func main() {
 		}
 		c.JSON(200, decisions)
 	})
+
+	r.POST("/decisions/:id/confirm", func(c *gin.Context) {
+		id := c.Param("id")
+		var event models.ExtractedEvent
+		c.BindJSON(&event)
+		err := services.ConfirmDecision(db, id, event)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"status": "confirmed"})
+	})
+
+	r.POST("/decisions/:id/dismiss", func(c *gin.Context) {
+		id := c.Param("id")
+		err := services.DismissDecision(db, id)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"status": "dismissed"})
+	})
+
 	r.Run(":8080")
 }

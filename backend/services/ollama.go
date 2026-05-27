@@ -27,12 +27,20 @@ func ProcessWithOllama(message models.SlackMessage, context []string) (models.Ex
 
 	Current message to analyze:
 	"` + message.Text + `"
-	
+
 	Rules:
-	- Only extract if there is a CLEAR commitment, decision, or deadline that was explicitly agreed upon
-	- Vague questions, suggestions, or casual chat should be type "none"
-	- Confidence should be "high" only if the commitment is explicit and unambiguous
-	- If someone is just asking a question with no answer, type is "none"
+	- Only extract if there is a CLEAR commitment, decision, or deadline explicitly agreed upon
+	- Vague questions, suggestions, or casual chat = type "none"
+	- If someone is just asking a question with no answer = type "none"
+	- confidence "high" ONLY if ALL of these are true:
+	1. The commitment is explicit and unambiguous
+	2. It is clear WHAT needs to be done
+	3. There is enough context to understand the full commitment
+	- confidence "low" if ANY of these are true:
+	1. Owner is null and it is unclear who is responsible
+	2. The summary is vague or refers to "this task", "it", "that thing" without explanation
+	3. No previous context and the message alone is not self-explanatory
+	4. You are unsure about any key detail
 	`
 
 	reqBody := models.OllamaRequest{
