@@ -6,6 +6,7 @@ import (
 	"os"
 	"recall/handlers"
 	"recall/services"
+	"strings"
 
 	"recall/models"
 
@@ -59,6 +60,14 @@ func main() {
 				fmt.Println("Channel:", channel_name)
 
 				var contextMessages []string
+
+				isReply := innerEvent.ThreadTimeStamp != ""
+				wordCount := len(strings.Fields(innerEvent.Text))
+
+				if !isReply && wordCount <= 5 {
+					// skip, not worth processing
+					continue // or return
+				}
 
 				if innerEvent.ThreadTimeStamp != "" {
 					// it's a reply, fetch the whole thread
