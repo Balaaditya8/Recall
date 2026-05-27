@@ -55,7 +55,7 @@ func DismissDecision(db *sql.DB, id string) error {
 	return err
 }
 
-func getRecentDecisions(db *sql.DB) ([]models.ExtractedEvent, error) {
+func GetRecentDecisions(db *sql.DB) ([]models.ExtractedEvent, error) {
 	rows, err := db.Query(`
 		SELECT id, type, summary, owner, deadline, confidence, channel, timestamp, slack_user, created_at, status
 		FROM decisions 
