@@ -47,7 +47,7 @@ func ProcessWithOllama(message models.SlackMessage, context []string) (models.Ex
 	`
 
 	reqBody := models.OllamaRequest{
-		Model:  "mistral:latest",
+		Model:  "llama3.1:8b",
 		Prompt: prompt,
 		Stream: false,
 	}
