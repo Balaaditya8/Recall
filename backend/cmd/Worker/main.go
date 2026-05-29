@@ -106,15 +106,22 @@ func main() {
 				}
 
 				go func() {
-					result, err := services.ProcessWithOllama(message, contextMessages)
+					existing, err := services.GetRecentDecisions(db, 10)
+					if err != nil {
+						fmt.Println("error fetching existing decisions:", err)
+						existing = []models.ExtractedEvent{} // empty slice, don't block
+					}
+					result, err := services.ProcessWithOllama(message, contextMessages, existing)
 					if err != nil {
 						fmt.Println("ollama error:", err)
 						return
 					}
 					fmt.Print(result)
-					if result.Type == "none" {
-						// ignore completely
-					} else {
+					if result.Status == "update" {
+						services.UpdateDecision(db, result)
+					} else if result.Type != "" && result.Status == "confirmed" {
+						services.SaveDecision(db, result)
+					} else if result.Type != "" && result.Status == "pending" {
 						services.SaveDecision(db, result)
 					}
 					//fmt.Printf("type: %s\nsummary: %s\nconfidence: %s\n", result.Type, result.Summary, result.Confidence)

@@ -55,12 +55,14 @@ func DismissDecision(db *sql.DB, id string) error {
 	return err
 }
 
-func GetRecentDecisions(db *sql.DB) ([]models.ExtractedEvent, error) {
+func GetRecentDecisions(db *sql.DB, limit int) ([]models.ExtractedEvent, error) {
 	rows, err := db.Query(`
-		SELECT id, type, summary, owner, deadline, confidence, channel, timestamp, slack_user, created_at, status
-		FROM decisions 
-		ORDER BY created_at DESC LIMIT 10
-	`)
+        SELECT id, type, summary, owner, deadline
+        FROM decisions
+        WHERE status = 'confirmed'
+        ORDER BY created_at DESC
+        LIMIT $1
+    `, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -69,11 +71,20 @@ func GetRecentDecisions(db *sql.DB) ([]models.ExtractedEvent, error) {
 	var decisions []models.ExtractedEvent
 	for rows.Next() {
 		var d models.ExtractedEvent
-		rows.Scan(&d.ID, &d.Type, &d.Summary, &d.Owner, &d.Deadline, &d.Confidence, &d.Channel, &d.Timestamp, &d.User, &d.CreatedAt, &d.Status)
+		rows.Scan(&d.ID, &d.Type, &d.Summary, &d.Owner, &d.Deadline)
 		decisions = append(decisions, d)
 	}
-	for i := range decisions {
-		decisions[i].Channel = handlers.GetChannelName(decisions[i].Channel)
-	}
 	return decisions, nil
+}
+
+func UpdateDecision(db *sql.DB, event models.ExtractedEvent) error {
+	_, err := db.Exec(`
+        UPDATE decisions 
+		SET 
+			summary = COALESCE(NULLIF($1, ''), summary),
+			owner = COALESCE(NULLIF($2, ''), owner),
+			deadline = COALESCE(NULLIF($3, ''), deadline)
+		WHERE id = $4
+    `, event.Summary, event.Owner, event.Deadline, event.ID)
+	return err
 }
