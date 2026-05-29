@@ -88,7 +88,7 @@ func ProcessWithOllama(message models.SlackMessage, context []string, existing [
 		- Summary must be under 10 words, clear and concise
 			- Good: "Andy will finish the API by Friday"
 			- Bad: "Virg will own the dashboard bug and will try and complete by coming monday"
-		- When owner changes, always regenerate the summary to reflect the new owner
+		- When owner or deadline changes, always regenerate the summary to reflect the new information
 		- Use save_decision with confidence "high" ONLY if ALL of these are true:
 		1. The commitment is explicit and unambiguous
 		2. It is clear WHAT needs to be done
