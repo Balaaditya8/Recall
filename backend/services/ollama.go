@@ -85,6 +85,10 @@ func ProcessWithOllama(message models.SlackMessage, context []string, existing [
 		- type "deadline" when a due date is set without a specific action (e.g. "launch is on Friday")
 		- type "decision" when a choice is made (e.g. "let's go with React", "we decided on postgres")
 		- "let's go with X", "we're going with X", "agreed on X" are always decisions with high confidence
+		- Summary must be under 10 words, clear and concise
+			- Good: "Andy will finish the API by Friday"
+			- Bad: "Virg will own the dashboard bug and will try and complete by coming monday"
+		- When owner changes, always regenerate the summary to reflect the new owner
 		- Use save_decision with confidence "high" ONLY if ALL of these are true:
 		1. The commitment is explicit and unambiguous
 		2. It is clear WHAT needs to be done
