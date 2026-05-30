@@ -170,6 +170,18 @@ func ProcessWithOllama(message models.SlackMessage, context []string, existing [
 		} else {
 			extracted.Status = "pending"
 		}
+		if args["owner"] != nil {
+			owner := fmt.Sprintf("%v", args["owner"])
+			if owner != "<nil>" && owner != "null" && owner != "unassigned" {
+				extracted.Owner = owner
+			}
+		}
+		if args["deadline"] != nil {
+			deadline := fmt.Sprintf("%v", args["deadline"])
+			if deadline != "<nil>" && deadline != "null" && deadline != "none" {
+				extracted.Deadline = deadline
+			}
+		}
 
 	case "update_decision":
 		args := toolCall.Function.Arguments
@@ -186,6 +198,18 @@ func ProcessWithOllama(message models.SlackMessage, context []string, existing [
 			extracted.Deadline = fmt.Sprintf("%v", args["deadline"])
 		}
 		extracted.Status = "update"
+		if args["owner"] != nil {
+			owner := fmt.Sprintf("%v", args["owner"])
+			if owner != "<nil>" && owner != "null" {
+				extracted.Owner = owner
+			}
+		}
+		if args["deadline"] != nil {
+			deadline := fmt.Sprintf("%v", args["deadline"])
+			if deadline != "<nil>" && deadline != "null" && deadline != "none" {
+				extracted.Deadline = deadline
+			}
+		}
 	}
 
 	return extracted, nil
