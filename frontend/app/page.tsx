@@ -116,7 +116,7 @@ function PendingCard({ d, onAction }: { d: Decision; onAction: () => void }) {
   );
 }
 
-function DecisionCard({ d }: { d: Decision }) {
+function DecisionCard({ d, onDelete }: { d: Decision; onDelete: () => void }) {
   const cfg = TYPE_CONFIG[d.type] ?? TYPE_CONFIG.none;
   return (
     <div className="group border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] rounded-2xl p-5 transition-all duration-200">
@@ -150,7 +150,18 @@ function DecisionCard({ d }: { d: Decision }) {
             )}
           </div>
         </div>
-        <span className="text-xs text-zinc-600 font-mono shrink-0">{timeAgo(d.created_at)}</span>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-xs text-zinc-600 font-mono">{timeAgo(d.created_at)}</span>
+          <button
+            onClick={async () => {
+              await fetch(`http://localhost:8080/decisions/${d.id}/dismiss`, { method: "POST" });
+              onDelete();
+            }}
+            className="opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-zinc-400 transition-all text-xs"
+          >
+            X
+          </button>
+</div>
       </div>
     </div>
   );
@@ -279,7 +290,7 @@ export default function Home() {
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {filtered.map((d) => <DecisionCard key={d.id} d={d} />)}
+            {filtered.map((d) => <DecisionCard key={d.id} d={d} onDelete={load} />)}
           </div>
         )}
 
