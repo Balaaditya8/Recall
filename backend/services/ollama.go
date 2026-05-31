@@ -101,12 +101,13 @@ func ProcessWithOllama(message models.SlackMessage, context []string, existing [
 		- Current date: ` + time.Now().Format("2006-01-02") + `
 		- Use actual dates for deadlines, not relative terms like "Friday" or "next Monday"`
 
-	userMessage := `Existing saved decisions: ` + existingStr + `Previous conversation:` + contextStr + `
-	
-	Current message: "` + message.Text + `"`
+	userMessage := "Existing saved decisions:\n" + existingStr +
+		"\n\nPrevious conversation context:\n" + contextStr +
+		"\n\n---\nCurrent message to analyze: \"" + message.Text + "\"\n---"
 
 	fmt.Println("existing decisions passed:", existingStr)
 	fmt.Println("context passed:", contextStr)
+	fmt.Println("usermessage:", userMessage)
 	reqBody := models.OllamaRequest{
 		Model: "qwen3.5:9b",
 		Messages: []models.OllamaMessage{

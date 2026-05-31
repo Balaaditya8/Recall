@@ -33,10 +33,14 @@ function timeAgo(dateStr: string) {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+function isNullish(v: string) {
+  return !v || v === "null" || v === "<nil>";
+}
+
 function PendingCard({ d, onAction }: { d: Decision; onAction: () => void }) {
   const [summary, setSummary] = useState(d.summary);
-  const [owner, setOwner] = useState(d.owner === "null" ? "" : d.owner);
-  const [deadline, setDeadline] = useState(d.deadline === "null" ? "" : d.deadline);
+  const [owner, setOwner] = useState(isNullish(d.owner) ? "" : d.owner);
+  const [deadline, setDeadline] = useState(isNullish(d.deadline) ? "" : d.deadline);
   const [type, setType] = useState(d.type);
   const [loading, setLoading] = useState(false);
 
@@ -65,18 +69,13 @@ function PendingCard({ d, onAction }: { d: Decision; onAction: () => void }) {
         <span className="text-xs text-amber-400 font-medium">Needs review</span>
         <span className="text-xs text-zinc-600 ml-auto font-mono">{timeAgo(d.created_at)}</span>
       </div>
-
-      <p className="text-xs text-zinc-500 mb-1">Ollama extracted:</p>
+      <p className="text-xs text-zinc-500 mb-1">Extracted:</p>
       <p className="text-zinc-400 text-sm mb-4 italic">"{d.summary}"</p>
-
       <div className="flex flex-col gap-2 mb-4">
         <div>
           <label className="text-xs text-zinc-600 mb-1 block">Type</label>
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-white/20"
-          >
+          <select value={type} onChange={(e) => setType(e.target.value)}
+            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-white/20">
             <option value="task">Task</option>
             <option value="decision">Decision</option>
             <option value="deadline">Deadline</option>
@@ -84,48 +83,32 @@ function PendingCard({ d, onAction }: { d: Decision; onAction: () => void }) {
         </div>
         <div>
           <label className="text-xs text-zinc-600 mb-1 block">Summary</label>
-          <input
-            value={summary}
-            onChange={(e) => setSummary(e.target.value)}
+          <input value={summary} onChange={(e) => setSummary(e.target.value)}
             className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-white/20"
-            placeholder="What was decided or committed to?"
-          />
+            placeholder="What was decided or committed to?" />
         </div>
         <div className="flex gap-2">
           <div className="flex-1">
             <label className="text-xs text-zinc-600 mb-1 block">Owner</label>
-            <input
-              value={owner}
-              onChange={(e) => setOwner(e.target.value)}
+            <input value={owner} onChange={(e) => setOwner(e.target.value)}
               className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-white/20"
-              placeholder="Who owns this?"
-            />
+              placeholder="Who owns this?" />
           </div>
           <div className="flex-1">
             <label className="text-xs text-zinc-600 mb-1 block">Deadline</label>
-            <input
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
+            <input value={deadline} onChange={(e) => setDeadline(e.target.value)}
               className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-white/20"
-              placeholder="When?"
-            />
+              placeholder="When?" />
           </div>
         </div>
       </div>
-
       <div className="flex gap-2">
-        <button
-          onClick={confirm}
-          disabled={loading || !summary}
-          className="flex-1 bg-white text-black text-sm font-medium py-2 rounded-lg hover:bg-zinc-200 transition-colors disabled:opacity-40"
-        >
+        <button onClick={confirm} disabled={loading || !summary}
+          className="flex-1 bg-white text-black text-sm font-medium py-2 rounded-lg hover:bg-zinc-200 transition-colors disabled:opacity-40">
           {loading ? "Saving..." : "Confirm"}
         </button>
-        <button
-          onClick={dismiss}
-          disabled={loading}
-          className="px-4 bg-white/5 text-zinc-400 text-sm py-2 rounded-lg hover:bg-white/10 transition-colors border border-white/10"
-        >
+        <button onClick={dismiss} disabled={loading}
+          className="px-4 bg-white/5 text-zinc-400 text-sm py-2 rounded-lg hover:bg-white/10 transition-colors border border-white/10">
           Dismiss
         </button>
       </div>
@@ -135,9 +118,8 @@ function PendingCard({ d, onAction }: { d: Decision; onAction: () => void }) {
 
 function DecisionCard({ d }: { d: Decision }) {
   const cfg = TYPE_CONFIG[d.type] ?? TYPE_CONFIG.none;
-
   return (
-    <div className="group relative border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] rounded-2xl p-5 transition-all duration-200">
+    <div className="group border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] rounded-2xl p-5 transition-all duration-200">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-3 flex-wrap">
@@ -148,13 +130,13 @@ function DecisionCard({ d }: { d: Decision }) {
           </div>
           <p className="text-white/90 text-sm font-medium leading-snug mb-3">{d.summary}</p>
           <div className="flex items-center gap-4 flex-wrap">
-            {d.owner && d.owner !== "null" && (
+            {!isNullish(d.owner) && (
               <span className="flex items-center gap-1.5 text-xs text-zinc-500">
                 <span className="text-zinc-600">owner</span>
                 <span className="text-zinc-300">{d.owner}</span>
               </span>
             )}
-            {d.deadline && d.deadline !== "null" && (
+            {!isNullish(d.deadline) && (
               <span className="flex items-center gap-1.5 text-xs text-zinc-500">
                 <span className="text-zinc-600">due</span>
                 <span className="text-zinc-300">{d.deadline}</span>
@@ -168,9 +150,7 @@ function DecisionCard({ d }: { d: Decision }) {
             )}
           </div>
         </div>
-        <div className="text-right shrink-0">
-          <span className="text-xs text-zinc-600 font-mono">{timeAgo(d.created_at)}</span>
-        </div>
+        <span className="text-xs text-zinc-600 font-mono shrink-0">{timeAgo(d.created_at)}</span>
       </div>
     </div>
   );
@@ -179,15 +159,13 @@ function DecisionCard({ d }: { d: Decision }) {
 export default function Home() {
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [channelFilter, setChannelFilter] = useState<string>("all");
 
   const load = () => {
     fetch("http://localhost:8080/decisions")
       .then((r) => r.json())
-      .then((data) => {
-        setDecisions(Array.isArray(data) ? data : []);
-        setLoading(false);
-      })
+      .then((data) => { setDecisions(Array.isArray(data) ? data : []); setLoading(false); })
       .catch(() => setLoading(false));
   };
 
@@ -199,9 +177,15 @@ export default function Home() {
 
   const pending = decisions.filter((d) => d.status === "pending");
   const confirmed = decisions.filter((d) => d.status === "confirmed");
-  const filtered = filter === "all" ? confirmed : confirmed.filter((d) => d.type === filter);
 
-  const counts = {
+  // unique channels from confirmed decisions
+  const channels = [...new Set(confirmed.map((d) => d.channel).filter(Boolean))];
+
+  const filtered = confirmed
+    .filter((d) => typeFilter === "all" || d.type === typeFilter)
+    .filter((d) => channelFilter === "all" || d.channel === channelFilter);
+
+  const typeCounts = {
     all: confirmed.length,
     task: confirmed.filter((d) => d.type === "task").length,
     decision: confirmed.filter((d) => d.type === "decision").length,
@@ -210,16 +194,13 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#0a0a0a] text-white">
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
-        }}
-      />
+      <div className="fixed inset-0 pointer-events-none" style={{
+        backgroundImage: "linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)",
+        backgroundSize: "48px 48px",
+      }} />
 
       <div className="relative max-w-2xl mx-auto px-6 py-16">
+        {/* Header */}
         <div className="mb-12">
           <div className="flex items-center gap-2 mb-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -229,41 +210,63 @@ export default function Home() {
           <p className="text-zinc-500 text-sm">Decisions and commitments from your conversations.</p>
         </div>
 
-        {/* Pending section */}
+        {/* Pending */}
         {pending.length > 0 && (
           <div className="mb-10">
             <p className="text-xs text-amber-400/80 font-mono uppercase tracking-widest mb-3">
               {pending.length} pending review
             </p>
             <div className="flex flex-col gap-3">
-              {pending.map((d) => (
-                <PendingCard key={d.id} d={d} onAction={load} />
-              ))}
+              {pending.map((d) => <PendingCard key={d.id} d={d} onAction={load} />)}
             </div>
           </div>
         )}
 
         {/* Filters */}
-        <div className="flex gap-2 mb-8 flex-wrap">
-          {(["all", "task", "decision", "deadline"] as const).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${
-                filter === f
-                  ? "bg-white text-black border-white"
-                  : "bg-transparent text-zinc-500 border-white/10 hover:border-white/20 hover:text-zinc-300"
-              }`}
-            >
-              {f === "all" ? "All" : TYPE_CONFIG[f].label}
-              <span className={`ml-1.5 ${filter === f ? "text-black/50" : "text-zinc-600"}`}>
-                {counts[f]}
-              </span>
-            </button>
-          ))}
+        <div className="flex flex-col gap-3 mb-8">
+          {/* Type filters */}
+          <div className="flex gap-2 flex-wrap">
+            {(["all", "task", "decision", "deadline"] as const).map((f) => (
+              <button key={f} onClick={() => setTypeFilter(f)}
+                className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${
+                  typeFilter === f
+                    ? "bg-white text-black border-white"
+                    : "bg-transparent text-zinc-500 border-white/10 hover:border-white/20 hover:text-zinc-300"
+                }`}>
+                {f === "all" ? "All" : TYPE_CONFIG[f].label}
+                <span className={`ml-1.5 ${typeFilter === f ? "text-black/50" : "text-zinc-600"}`}>
+                  {typeCounts[f]}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Channel filters — only show if more than one channel */}
+          {channels.length > 1 && (
+            <div className="flex gap-2 flex-wrap">
+              <button onClick={() => setChannelFilter("all")}
+                className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${
+                  channelFilter === "all"
+                    ? "bg-zinc-700 text-white border-zinc-600"
+                    : "bg-transparent text-zinc-600 border-white/10 hover:border-white/20 hover:text-zinc-400"
+                }`}>
+                All channels
+              </button>
+              {channels.map((ch) => (
+                <button key={ch} onClick={() => setChannelFilter(ch)}
+                  className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all font-mono ${
+                    channelFilter === ch
+                      ? "bg-zinc-700 text-white border-zinc-600"
+                      : "bg-transparent text-zinc-600 border-white/10 hover:border-white/20 hover:text-zinc-400"
+                  }`}>
+                  #{ch}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Confirmed decisions */}
+        {/* Decisions */}
         {loading ? (
           <div className="flex items-center gap-3 text-zinc-600 py-12">
             <div className="w-4 h-4 border border-zinc-700 border-t-zinc-400 rounded-full animate-spin" />
@@ -276,9 +279,7 @@ export default function Home() {
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {filtered.map((d) => (
-              <DecisionCard key={d.id} d={d} />
-            ))}
+            {filtered.map((d) => <DecisionCard key={d.id} d={d} />)}
           </div>
         )}
 
