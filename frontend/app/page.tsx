@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 type Decision = {
@@ -216,10 +217,14 @@ export default function Home() {
           <div className="flex items-center gap-2 mb-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-xs text-zinc-500 font-mono tracking-widest uppercase">Live</span>
+            <Link href="/digest" className="text-xs text-zinc-600 hover:text-zinc-400 font-mono transition-colors">
+  digests →
+</Link>
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Recall</h1>
           <p className="text-zinc-500 text-sm">Decisions and commitments from your conversations.</p>
         </div>
+        
 
         {/* Pending */}
         {pending.length > 0 && (

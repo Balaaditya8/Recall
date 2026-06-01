@@ -69,9 +69,9 @@ func DigestAlreadyExists(db *sql.DB, channel string) bool {
 func SaveDigest(db *sql.DB, digest models.Digest) error {
 	_, err := db.Exec(`
     INSERT INTO digests (date, channel, summary)
-    VALUES ($1, $2, $3)`,
-		time.Now().Format("2006-01-02"), digest.Channel, digest.Summary,
-	)
+    VALUES ($1, $2, $3)
+    ON CONFLICT (date, channel) DO NOTHING
+`, time.Now().Format("2006-01-02"), digest.Channel, digest.Summary)
 	return err
 }
 
