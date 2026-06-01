@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"recall/handlers"
 	"recall/models"
 	"sync"
 	"time"
@@ -30,9 +29,6 @@ func GetTodaysDecisions(db *sql.DB, channel string) []models.ExtractedEvent {
 		rows.Scan(&d.ID, &d.Type, &d.Summary, &d.Owner, &d.Deadline, &d.Confidence, &d.Channel, &d.Timestamp, &d.User, &d.CreatedAt, &d.Status)
 		decisions = append(decisions, d)
 	}
-	for i := range decisions {
-		decisions[i].Channel = handlers.GetChannelName(decisions[i].Channel)
-	}
 	return decisions
 }
 
@@ -49,7 +45,7 @@ func GetActiveChannelsToday(db *sql.DB) []string {
 	for rows.Next() {
 		var channelID string
 		rows.Scan(&channelID)
-		channels = append(channels, handlers.GetChannelName(channelID))
+		channels = append(channels, channelID)
 	}
 	return channels
 }
