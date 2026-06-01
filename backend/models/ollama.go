@@ -19,7 +19,7 @@ type OllamaToolFunction struct {
 type OllamaRequest struct {
 	Model    string          `json:"model"`
 	Messages []OllamaMessage `json:"messages"`
-	Tools    []OllamaTool    `json:"tools"`
+	Tools    []OllamaTool    `json:"tools,omitempty"`
 	Stream   bool            `json:"stream"`
 }
 

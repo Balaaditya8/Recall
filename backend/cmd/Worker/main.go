@@ -15,6 +15,7 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/joho/godotenv"
+	"github.com/robfig/cron/v3"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
@@ -38,6 +39,13 @@ func main() {
 		log.Fatal("cannot connect to db:", err)
 	}
 	fmt.Println("connected to postgres")
+
+	c := cron.New()
+	c.AddFunc("*/2 * * * *", func() {
+		fmt.Println("running daily digest...")
+		services.RunDailyDigest(db)
+	})
+	c.Start()
 
 	client := socketmode.New(handlers.Client)
 	go func() {
