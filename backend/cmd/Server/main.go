@@ -67,5 +67,14 @@ func main() {
 		c.JSON(200, gin.H{"status": "dismissed"})
 	})
 
+	r.GET("/digests", func(c *gin.Context) {
+		digests, err := services.GetDigests(db)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, digests)
+	})
+
 	r.Run(":8080")
 }

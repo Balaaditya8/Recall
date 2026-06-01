@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"recall/handlers"
 	"recall/models"
 	"sync"
 	"time"
@@ -149,4 +150,23 @@ func RunDailyDigest(db *sql.DB) {
 		}(channel)
 	}
 	wg.Wait()
+}
+
+func GetDigests(db *sql.DB) ([]models.Digest, error) {
+	rows, _ := db.Query(`
+        SELECT id, date, channel, summary, created_at 
+        FROM digests 
+        ORDER BY date DESC, created_at DESC
+    `)
+	// scan same pattern as GetDecisions
+	var digests []models.Digest
+	for rows.Next() {
+		var d models.Digest
+		rows.Scan(&d.ID, &d.Date, &d.Channel, &d.Summary, &d.CreatedAt)
+		digests = append(digests, d)
+	}
+	for i := range digests {
+		digests[i].Channel = handlers.GetChannelName(digests[i].Channel)
+	}
+	return digests, nil
 }
