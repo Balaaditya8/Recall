@@ -21,3 +21,11 @@ type ExtractedEvent struct {
 	CreatedAt  string `json:"created_at"`
 	Status     string `json:"status"`
 }
+
+type Digest struct {
+	ID        int    `json:"id"`
+	Date      string `json:"date"`
+	Channel   string `json:"channel"`
+	Summary   string `json:"summary"`
+	CreatedAt string `json:"created_at"`
+}
